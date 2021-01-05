@@ -22,6 +22,6 @@ express.get('/', (req, res) => {
   console.log('Lets go')
 })
 
-opn('http://localhost:3000/', {app: ['chrome']})
+// opn('http://localhost:3000/', {app: ['chrome']}) 
 
 http.listen(3000, () => console.log('Server is listening, port 3000'))

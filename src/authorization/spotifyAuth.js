@@ -1,12 +1,12 @@
 const express = require('express')
 const router = express.Router()
 const fetch = require('node-fetch')
-const { path, tap } = require('ramda')
+const { path, tap, prop } = require('ramda')
 const { writeFileSync } = require('fs')
 const { setSpotifyCredentials } = require('../redux/reducer')
 const FormData = require('form-data')
-
-const toJson = (response) => response.json()
+const request = require('request')
+const toJson = (response) => response.text()
 
 const saveAuthOnFile = (state) => {
   console.log(state)
@@ -20,30 +20,28 @@ router.get('/', (req, res) => {
   res.redirect(url)
 })
 
-
-const createFormData = (req) => {
-  const form = new FormData()
-  form.append('code', path(['query', 'code'])(req))
-  form.append('grant_type', 'authorization_code')
-  form.append('redirect_uri', 'http://localhost:3000/authorization/callback')
-  return form
-}
-
-router.get('/callback', (req, res) => fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',    
-    headers: {
-      Authorization: 'Basic ' + (Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')),
-      'Content-Type': 'application/json'
+router.get('/callback', async (req, res) => {
+  const options = {
+    url: 'https://accounts.spotify.com/api/token',
+    form: {
+      'code': path(['query', 'code'])(req),
+      'grant_type': 'authorization_code',
+      'redirect_uri': 'http://localhost:3000/authorization/callback'
     },
-    body: {
-      form: createFormData(req)
-    }
-  })
-  .then(tap(console.log))
-  .then(toJson)
-  .then(setSpotifyCredentials)
-  .then(saveAuthOnFile)
-  .then(() => res.redirect('/'))
-)
+    headers: {
+      Authorization: 'Basic ' + (Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'))
+    },
+    json: true
+  }
+
+  const { body } = await request.post(options)
+  const code = new URLSearchParams(body).get('code')
+  console.log(code)
+})
+
+//   .then(setSpotifyCredentials)
+//   .then(saveAuthOnFile)
+//   // .then(() => res.redirect('/'))
+// )
 
 module.exports = router
