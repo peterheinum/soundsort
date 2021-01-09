@@ -4,4 +4,6 @@ const state = {
   timestamp: null
 }
 
-module.exports = { state }
+const getState = () => ({ ...state })
+
+module.exports = { state, getState }

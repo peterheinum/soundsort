@@ -6,19 +6,21 @@ const { writeFileSync } = require('fs')
 const { setSpotifyCredentials } = require('../redux/reducer')
 const FormData = require('form-data')
 const request = require('request')
-const toJson = (response) => response.text()
 
-const saveAuthOnFile = (state) => {
-  console.log(state)
-  writeFileSync('spotifyAuth.txt', JSON.stringify({ ...state }))
-}
+const saveAuthOnFile = (state) => writeFileSync('spotifyAuth.json', JSON.stringify({ ...state }))
 
 router.get('/', (req, res) => {
   const redirect_uri = encodeURIComponent('http://localhost:3000/authorization/callback')
-  const scopes = 'playlist-read-collaborative%20playlist-read-private%20playlist-modify-private%20playlist-modify-public'
+  const scopes = 'playlist-read-collaborative%20playlist-read-private%20playlist-modify-private%20playlist-modify-public%20playlist-read-collaborative'
   const url = `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&scope=${scopes}&redirect_uri=${redirect_uri}`
   res.redirect(url)
 })
+
+const _request = (method, options) => new Promise((resolve, reject) =>
+  request[method](options, (err, __, body) => 
+    err ? reject(err) : resolve(body)
+  )
+)
 
 router.get('/callback', async (req, res) => {
   const options = {
@@ -34,14 +36,10 @@ router.get('/callback', async (req, res) => {
     json: true
   }
 
-  const { body } = await request.post(options)
-  const code = new URLSearchParams(body).get('code')
-  console.log(code)
+  _request('post', options)
+  .then(setSpotifyCredentials)
+  .then(saveAuthOnFile)
+  .then(() => res.redirect('/'))
 })
-
-//   .then(setSpotifyCredentials)
-//   .then(saveAuthOnFile)
-//   // .then(() => res.redirect('/'))
-// )
 
 module.exports = router
