@@ -8,7 +8,7 @@ const bodyParser = require('body-parser')
 const compression = require('compression')
 const reducer = require('./redux/reducer')
 const { getState } = require('./redux/state')
-const { getUserPlaylists } = require('./spotifyApi')
+const { getUserPlaylists, createNewPlaylist, createSortedPlaylist } = require('./spotifyApi')
 const { pipe, props, equals, prop } = require('ramda')
 
 /* Express config */
@@ -22,8 +22,6 @@ express.get('/', (req, res) => res.sendFile(join(`${__dirname}/public/index.html
 
 const init = async () => {
   const { access_token, timestamp } = getState()
-  // console.log({access_token})
-  // console.log({timestamp})
   if(!access_token || !(Date.now() - timestamp < 3600000)) {
     opn('http://localhost:3000/authorization', {app: ['chrome'], allowNonzeroExitCode: true, wait: true}) 
     return
@@ -40,8 +38,7 @@ const init = async () => {
   prompt.get(['choice'], (err, { choice }) => {
     const chosenPlaylist = playlists.find(playlist => playlist.index == choice)
     console.log(chosenPlaylist)
-    console.log(choice)
-    
+    createSortedPlaylist(chosenPlaylist).then(console.log)
   })
 }
 

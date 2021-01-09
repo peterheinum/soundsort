@@ -15,8 +15,5 @@ module.exports = {
   ...reducers
 }
 
-const init = () => {
-  setSpotifyCredentials(savedState)
-  console.log(getState())
-}
+const init = () => setSpotifyCredentials(savedState)
 init()
